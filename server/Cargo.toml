@@ -1,0 +1,10 @@
+[package]
+name = "collatz"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sha-crypt = "0.4"
+sqlite = "0.24"
+colored = "2.0"
+
