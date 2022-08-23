@@ -39,7 +39,6 @@ pub fn login_account(username: &str, password: &str, mut stream: &TcpStream) -> 
     return Ok(());
 }
 
-
 pub fn create_account(username: &str, e_mail: &str, password: &str, mut stream: &TcpStream) -> Result<(), Error> {
     stream.write(&CREATE_REQUEST).unwrap();
     stream.write(username.as_bytes()).unwrap();

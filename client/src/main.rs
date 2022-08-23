@@ -4,6 +4,50 @@ use colored::Colorize;
 
 
 fn main() {
+    cli();
+}
+
+fn cli_configuration() -> String {
+    let mut ip = String::new();
+    println!("Please enter server IP: ");
+    std::io::stdin().read_line(&mut ip).unwrap();
+
+    let mut port = String::new();
+    println!("Please enter port: ");
+    std::io::stdin().read_line(&mut port).unwrap();
+
+    return format!("{}:{}", ip.trim(), port.trim());
+}
+
+fn cli_login() -> (String, String) {
+    let mut username = String::new();
+    println!("\nPlease enter username: ");
+    std::io::stdin().read_line(&mut username).unwrap();
+
+    let mut password = String::new();
+    println!("Please enter password: ");
+    std::io::stdin().read_line(&mut password).unwrap();
+
+    return (username.trim().to_string(), password.trim().to_string());
+}
+
+fn cli_register() -> (String, String, String) {
+    let mut username = String::new();
+    println!("\nPlease enter username: ");
+    std::io::stdin().read_line(&mut username).unwrap();
+
+    let mut e_mail = String::new();
+    println!("Please enter email: ");
+    std::io::stdin().read_line(&mut e_mail).unwrap();
+
+    let mut password = String::new();
+    println!("Please enter password: ");
+    std::io::stdin().read_line(&mut password).unwrap();
+
+    return (username.trim().to_string(), e_mail.trim().to_string(), password.trim().to_string());
+}
+
+fn cli() {
     println!("\n{}\n", "[CLIENT STARTING]".green());
 
     let ip_address = cli_configuration();
@@ -48,46 +92,5 @@ fn main() {
         },
         Err(e) => println!("\n{} > {}\n", "[ERROR]".red(), e)
     }
-}
-
-
-fn cli_configuration() -> String {
-    let mut ip = String::new();
-    println!("Please enter server IP: ");
-    std::io::stdin().read_line(&mut ip).unwrap();
-
-    let mut port = String::new();
-    println!("Please enter port: ");
-    std::io::stdin().read_line(&mut port).unwrap();
-
-    return format!("{}:{}", ip.trim(), port.trim());
-}
-
-fn cli_login() -> (String, String) {
-    let mut username = String::new();
-    println!("\nPlease enter username: ");
-    std::io::stdin().read_line(&mut username).unwrap();
-
-    let mut password = String::new();
-    println!("Please enter password: ");
-    std::io::stdin().read_line(&mut password).unwrap();
-
-    return (username.trim().to_string(), password.trim().to_string());
-}
-
-fn cli_register() -> (String, String, String) {
-    let mut username = String::new();
-    println!("\nPlease enter username: ");
-    std::io::stdin().read_line(&mut username).unwrap();
-
-    let mut e_mail = String::new();
-    println!("Please enter email: ");
-    std::io::stdin().read_line(&mut e_mail).unwrap();
-
-    let mut password = String::new();
-    println!("Please enter password: ");
-    std::io::stdin().read_line(&mut password).unwrap();
-
-    return (username.trim().to_string(), e_mail.trim().to_string(), password.trim().to_string());
 }
 

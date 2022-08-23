@@ -1,13 +1,11 @@
-pub mod database;
 pub mod user;
 mod server;
 
 
 fn main() {
-    database::create_tables();
+    user::create_table();
     println!("\n");
     server::info("Starting server".to_string());
     server::run();
-
 }
 

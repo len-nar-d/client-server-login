@@ -3,8 +3,7 @@ use std::thread;
 use std::net::{TcpListener, TcpStream, Shutdown};
 use std::io::{Read, Write, Error, ErrorKind};
 use std::str::from_utf8;
-use crate::user::User;
-use crate::database;
+use crate::user;
 
 static CREATE_REQUEST: [u8; 4] = [0,0,0,1];
 static LOGIN_REQUEST: [u8; 4] = [0,0,1,0];
@@ -22,7 +21,7 @@ pub fn warn(msg: String) {
     println!("{}", message);
 }
 
-fn login_account(mut stream: &TcpStream) -> Result<User, Error> {
+fn login_account(mut stream: &TcpStream) -> Result<user::User, Error> {
     let mut username_message = [0 as u8; 64];
     let mut password_message = [0 as u8; 128];
 
@@ -32,7 +31,7 @@ fn login_account(mut stream: &TcpStream) -> Result<User, Error> {
     match stream.read(&mut username_message) {
         Ok(size) => {
             username = from_utf8(&username_message[0..size]).unwrap();
-            if !database::check_username(&username) {
+            if !user::check_username(&username) {
                 stream.write(&ERROR_MESSAGE).unwrap();
                 return Err(Error::new(ErrorKind::Other, "false username"));
             } else {
@@ -45,7 +44,7 @@ fn login_account(mut stream: &TcpStream) -> Result<User, Error> {
         }
     }
 
-    let account = User::from_database(&username);
+    let account = user::User::from_database(&username);
 
     match stream.read(&mut password_message) {
         Ok(size) => {
@@ -66,8 +65,7 @@ fn login_account(mut stream: &TcpStream) -> Result<User, Error> {
     return Ok(account);
 }
 
-
-fn create_account(mut stream: &TcpStream) -> Result<User, Error> {
+fn create_account(mut stream: &TcpStream) -> Result<user::User, Error> {
     let mut username_message = [0 as u8; 64];
     let mut e_mail_message = [0 as u8; 128];
     let mut password_message = [0 as u8; 128];
@@ -79,7 +77,7 @@ fn create_account(mut stream: &TcpStream) -> Result<User, Error> {
     match stream.read(&mut username_message) {
         Ok(size) => {
             username = from_utf8(&username_message[0..size]).unwrap();
-            if database::check_username(&username) {
+            if user::check_username(&username) {
                 stream.write(&ERROR_MESSAGE).unwrap();
                 return Err(Error::new(ErrorKind::Other, "username exists"));
             } else {
@@ -114,15 +112,13 @@ fn create_account(mut stream: &TcpStream) -> Result<User, Error> {
         }
     }
     
-    let account = User::new(&username, &e_mail, &password);
-    account.save_user();
+    let account = user::User::new(&username, &e_mail, &password);
 
     return Ok(account);
 }
 
-
 fn handle_request(mut stream: TcpStream) {
-    let mut session_user: Option<User> = None;
+    let mut session_user: Option<user::User> = None;
     let mut data = [0 as u8; 4];
     
     while match stream.read_exact(&mut data) {
@@ -135,18 +131,18 @@ fn handle_request(mut stream: TcpStream) {
                 if &LOGIN_REQUEST == &data {
                     match login_account(&stream) {
                         Ok(user) => {
-                            info(format!("Login with username: {}", user.get_username()));
+                            info(format!("Login with username: {} from {}", user.get_username(), stream.peer_addr().unwrap()));
                             session_user = Some(user);
                         },
-                        Err(e) => warn(format!("Login error: {}", e))
+                        Err(e) => warn(format!("Login error: {} from {}", e, stream.peer_addr().unwrap()))
                     }
                 } else if &CREATE_REQUEST == &data {
                     match create_account(&stream) {
                         Ok(user) => {
-                            info(format!("Created account with username: {}", user.get_username()));
+                            info(format!("Created account with username: {} from {}", user.get_username(), stream.peer_addr().unwrap()));
                             session_user = Some(user);
                         },
-                        Err(e) => warn(format!("Account creation error: {}", e))
+                        Err(e) => warn(format!("Account creation error: {} from", e))
                     };
                 }
             }
@@ -160,7 +156,6 @@ fn handle_request(mut stream: TcpStream) {
 
     stream.shutdown(Shutdown::Both).unwrap();
 }
-
 
 pub fn run() {
     let listener = TcpListener::bind("0.0.0.0:3333").unwrap();
