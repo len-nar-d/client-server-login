@@ -7,18 +7,6 @@ fn main() {
     cli();
 }
 
-fn cli_configuration() -> String {
-    let mut ip = String::new();
-    println!("Please enter server IP: ");
-    std::io::stdin().read_line(&mut ip).unwrap();
-
-    let mut port = String::new();
-    println!("Please enter port: ");
-    std::io::stdin().read_line(&mut port).unwrap();
-
-    return format!("{}:{}", ip.trim(), port.trim());
-}
-
 fn cli_login() -> (String, String) {
     let mut username = String::new();
     println!("\nPlease enter username: ");
@@ -48,13 +36,9 @@ fn cli_register() -> (String, String, String) {
 }
 
 fn cli() {
-    println!("\n{}\n", "[CLIENT STARTING]".green());
-
-    let ip_address = cli_configuration();
-
     println!("\n{}\n", "[CONNECTING TO SERVER]".green());
 
-    match connection::connect(&ip_address) {
+    match connection::connect() {
         Ok(stream) => {
 
             let mut choice = String::new();

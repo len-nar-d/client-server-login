@@ -48,7 +48,6 @@ impl User {
     }
 
     fn find_user_object(username: &str) -> (String, String, String) {
-    
         let connection = sqlite::open("users.db").unwrap();
     
         let content = format!("SELECT * FROM users WHERE username = '{}';", username);
@@ -72,7 +71,7 @@ impl User {
 }
 
 
-pub fn create_table() {
+pub fn user_table() {
     let connection = sqlite::open("users.db").unwrap();
 
     connection.execute("CREATE TABLE IF NOT EXISTS users (username TEXT, e_mail TEXT, password_hash TEXT);",).unwrap();
