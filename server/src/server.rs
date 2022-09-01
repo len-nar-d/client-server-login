@@ -1,43 +1,17 @@
 use colored::Colorize;
 use std::{thread, time};
 use std::net::{TcpListener, TcpStream, Shutdown};
-use std::io::{Read, Write, Error, ErrorKind, BufReader};
+use std::io::{Read, Write, Error, ErrorKind};
 use std::str::from_utf8;
-use serde_derive::Deserialize;
+
 use crate::user;
+use crate::Settings;
 
 static CREATE_REQUEST: [u8; 4] = [0,0,0,1];
 static LOGIN_REQUEST: [u8; 4] = [0,0,1,0];
 static ERROR_MESSAGE: [u8; 4] = [1,0,0,0];
 static SUCCESS_MESSAGE: [u8; 4] = [0,0,0,0];
 
-
-#[derive(Deserialize, Debug)]
-struct Settings {
-    network: Network,
-    securtiy: Security
-}
-
-#[derive(Deserialize, Debug)]
-struct Network {
-    ip_address: String,
-    port: String
-}
-
-#[derive(Deserialize, Debug)]
-struct Security {
-    response_time: u64,
-    login_trys: u32
-}
-
-fn read_settings<P: AsRef<std::path::Path>>(path: P) -> Result<Settings, Box<dyn std::error::Error>> {
-    let file = std::fs::File::open(path)?;
-    let reader = BufReader::new(file);
-
-    let content = serde_json::from_reader(reader)?;
-
-    Ok(content)
-}
 
 pub fn info(msg: String) {
     let message = format!("{} > {}", "[INFO]".yellow(), msg);
@@ -173,14 +147,13 @@ fn create_account(mut stream: &TcpStream) -> Result<user::User, Error> {
     return Ok(account);
 }
 
-fn handle_request(mut stream: TcpStream, ip_address: &str) {
+fn handle_request(mut stream: TcpStream, ip_address: &str, allowed_login_trys: u32) {
     let mut session_user: Option<user::User> = None;
     let mut data = [0 as u8; 4];
-    let settings = read_settings("./src/settings.json").unwrap();
     
     while match stream.read_exact(&mut data) {
         Ok(_) => {
-            if false_attempts_for_ip(&ip_address) >= settings.securtiy.login_trys {
+            if false_attempts_for_ip(&ip_address) >= allowed_login_trys {
                 stream.shutdown(Shutdown::Both).unwrap();
             }
 
@@ -222,10 +195,10 @@ fn handle_request(mut stream: TcpStream, ip_address: &str) {
     stream.shutdown(Shutdown::Both).unwrap();
 }
 
-pub fn run() {
-    let settings = read_settings("./src/settings.json").unwrap();
+pub fn run(settings: Settings) {
     let server_ip = format!("{}:{}", settings.network.ip_address, settings.network.port);
     let response_time = time::Duration::from_millis(settings.securtiy.response_time);
+    let allowed_login_trys = settings.securtiy.login_trys;
     
     let listener = TcpListener::bind(server_ip).unwrap();
 
@@ -242,11 +215,11 @@ pub fn run() {
             .unwrap()
             .to_string();
 
-        if false_attempts_for_ip(&ip_address) < settings.securtiy.login_trys {
+        if false_attempts_for_ip(&ip_address) < allowed_login_trys {
             match stream {
                 Ok(stream) => {
                     info(format!("New connection with {}", &ip_address));
-                    thread::spawn(move|| {handle_request(stream, &ip_address)});
+                    thread::spawn(move|| {handle_request(stream, &ip_address, allowed_login_trys)});
                 }
                 Err(e) => {
                     warn(format!("Error has occured: {}", e));
